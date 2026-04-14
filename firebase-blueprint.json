@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "Psicologo": {
+      "title": "Psicólogo",
+      "description": "Perfil do profissional psicólogo.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "nome": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "crp": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "nome", "email"]
+    },
+    "Paciente": {
+      "title": "Paciente",
+      "description": "Dados cadastrais do paciente.",
+      "type": "object",
+      "properties": {
+        "psicologoId": { "type": "string" },
+        "nome": { "type": "string" },
+        "cpf": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "telefone": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["psicologoId", "nome"]
+    },
+    "Evolucao": {
+      "title": "Evolução Clínica",
+      "description": "Registro de sessão estruturado.",
+      "type": "object",
+      "properties": {
+        "pacienteId": { "type": "string" },
+        "psicologoId": { "type": "string" },
+        "data": { "type": "string", "format": "date-time" },
+        "conteudoBruto": { "type": "string" },
+        "conteudoFormatado": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["pacienteId", "psicologoId", "data"]
+    },
+    "Transacao": {
+      "title": "Transação Financeira",
+      "description": "Registro de cobrança ou pagamento.",
+      "type": "object",
+      "properties": {
+        "pacienteId": { "type": "string" },
+        "psicologoId": { "type": "string" },
+        "valor": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid"] },
+        "data": { "type": "string", "format": "date-time" }
+      },
+      "required": ["pacienteId", "psicologoId", "valor", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "Psicologo",
+      "description": "Perfis de psicólogos."
+    },
+    "/patients/{patientId}": {
+      "schema": "Paciente",
+      "description": "Dados dos pacientes."
+    },
+    "/evolutions/{evolutionId}": {
+      "schema": "Evolucao",
+      "description": "Prontuários e evoluções."
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transacao",
+      "description": "Registros financeiros."
+    }
+  }
+}

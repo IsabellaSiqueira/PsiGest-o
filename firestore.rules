@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Fields: uid, nome, email, crp, role
+    //
+    // Collection: patients
+    // Fields: psicologoId, nome, cpf, email, telefone, createdAt
+    //
+    // Collection: evolutions
+    // Fields: pacienteId, psicologoId, data, conteudoBruto, conteudoFormatado, createdAt
+    //
+    // Collection: transactions
+    // Fields: pacienteId, psicologoId, valor, status, data
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDataOwner(data) {
+      return isAuthenticated() && request.auth.uid == data.psicologoId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && request.resource.data.role == 'user';
+    }
+
+    // Patients Collection
+    match /patients/{patientId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.psicologoId == request.auth.uid) && (request.resource == null || request.resource.data.psicologoId == request.auth.uid);
+    }
+
+    // Evolutions Collection
+    match /evolutions/{evolutionId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.psicologoId == request.auth.uid) && (request.resource == null || request.resource.data.psicologoId == request.auth.uid);
+    }
+
+    // Transactions Collection
+    match /transactions/{transactionId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.psicologoId == request.auth.uid) && (request.resource == null || request.resource.data.psicologoId == request.auth.uid);
+    }
+  }
+}

@@ -157,7 +157,7 @@ export default function PatientList({ patients, onAddClick, onEditClick, onViewR
                               ))}
                               <span className={cn(
                                 "px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider",
-                                patient.modality === 'Online' ? "bg-blue-50 text-blue-600" : "bg-indigo-50 text-indigo-600"
+                                patient.modality === 'Online' ? "bg-sky-50 text-sky-600" : "bg-amber-50 text-amber-600"
                               )}>
                                 {patient.modality}
                               </span>
@@ -252,7 +252,12 @@ export default function PatientList({ patients, onAddClick, onEditClick, onViewR
                 </div>
                 <div className="p-4 bg-slate-50 rounded-2xl">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Modalidade</p>
-                  <p className="font-bold text-slate-900">{selectedPatient.modality}</p>
+                  <p className={cn(
+                    "font-bold",
+                    selectedPatient.modality === 'Online' ? "text-sky-600" : "text-amber-600"
+                  )}>
+                    {selectedPatient.modality}
+                  </p>
                 </div>
               </div>
               

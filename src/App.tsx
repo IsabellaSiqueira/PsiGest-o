@@ -17,6 +17,7 @@ import { cn } from './lib/utils';
 import AICopilot from './components/AICopilot';
 import PatientList from './components/PatientList';
 import FinanceManager from './components/FinanceManager';
+import CalendarView from './components/CalendarView';
 import Modal from './components/Modal';
 import Login from './components/Login';
 
@@ -36,7 +37,9 @@ const initialPatients = [
     history: [
       { id: 'h1', date: '01 Abr 2024', content: 'Paciente relatou melhora no sono após técnicas de relaxamento.' },
       { id: 'h2', date: '08 Abr 2024', content: 'Focamos em reestruturação cognitiva sobre pensamentos de insuficiência.' }
-    ]
+    ],
+    recurringDay: 'Terça',
+    recurringTime: '15:00'
   },
   { 
     id: '2', 
@@ -51,11 +54,26 @@ const initialPatients = [
     notes: '',
     history: [
       { id: 'h3', date: '07 Abr 2024', content: 'Sessão focada em ativação comportamental. Baixa energia relatada.' }
-    ]
+    ],
+    recurringDay: '',
+    recurringTime: ''
   },
-  { id: '3', name: 'Mariana Costa', email: 'mari.costa@email.com', phone: '5511966665555', lastSession: '06 Abr 2024', status: 'Inativo', tags: ['TCC'], modality: 'Online', risk: 'medium', notes: '', history: [] },
-  { id: '4', name: 'Ricardo Santos', email: 'ricardo.s@email.com', phone: '5511955554444', lastSession: '01 Abr 2024', status: 'Ativo', tags: ['Casal'], modality: 'Presencial', risk: 'low', notes: '', history: [] },
+  { id: '3', name: 'Mariana Costa', email: 'mari.costa@email.com', phone: '5511966665555', lastSession: '06 Abr 2024', status: 'Inativo', tags: ['TCC'], modality: 'Online', risk: 'medium', notes: '', history: [], recurringDay: '', recurringTime: '' },
+  { id: '4', name: 'Ricardo Santos', email: 'ricardo.s@email.com', phone: '5511955554444', lastSession: '01 Abr 2024', status: 'Ativo', tags: ['Casal'], modality: 'Presencial', risk: 'low', notes: '', history: [], recurringDay: '', recurringTime: '' },
 ];
+
+const initialAppointments = {
+  '2026-04-14': [
+    { id: '1', patientName: 'Ana Silva', time: '09:00', duration: '50min', type: 'Online', status: 'completed' },
+    { id: '2', patientName: 'Carlos Oliveira', time: '10:30', duration: '50min', type: 'Presencial', status: 'confirmed' },
+    { id: '3', patientName: 'Mariana Costa', time: '14:00', duration: '50min', type: 'Online', status: 'confirmed' },
+    { id: '4', patientName: 'Ricardo Santos', time: '16:00', duration: '50min', type: 'Presencial', status: 'pending' },
+  ],
+  '2026-04-15': [
+    { id: '5', patientName: 'Julia Mendes', time: '08:00', duration: '50min', type: 'Online', status: 'confirmed' },
+    { id: '6', patientName: 'Pedro Rocha', time: '11:00', duration: '50min', type: 'Presencial', status: 'confirmed' },
+  ]
+};
 
 const initialTransactions = [
   { id: '1', patient: 'Ana Silva', amount: 150.00, date: '08 Abr 2024', status: 'paid', category: 'Sessão Individual', phone: '5511988887777' },
@@ -69,6 +87,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [patients, setPatients] = useState(initialPatients);
+  const [appointments, setAppointments] = useState<any>(initialAppointments);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
@@ -76,7 +95,7 @@ export default function App() {
   const [selectedPatientForRecord, setSelectedPatientForRecord] = useState<any>(null);
 
   // Form states
-  const [newPatient, setNewPatient] = useState({ name: '', email: '', phone: '', modality: 'Online' });
+  const [newPatient, setNewPatient] = useState({ name: '', email: '', phone: '', modality: 'Online', recurringDay: '', recurringTime: '' });
   const [newTx, setNewTx] = useState({ patient: '', amount: '', category: 'Sessão Individual' });
 
   const handleAddPatient = (e: FormEvent) => {
@@ -93,7 +112,7 @@ export default function App() {
       history: []
     }, ...patients]);
     setIsPatientModalOpen(false);
-    setNewPatient({ name: '', email: '', phone: '', modality: 'Online' });
+    setNewPatient({ name: '', email: '', phone: '', modality: 'Online', recurringDay: '', recurringTime: '' });
   };
 
   const handleEditPatient = (e: FormEvent) => {
@@ -101,7 +120,7 @@ export default function App() {
     setPatients(patients.map(p => p.id === editingPatient.id ? { ...p, ...newPatient } : p));
     setIsPatientModalOpen(false);
     setEditingPatient(null);
-    setNewPatient({ name: '', email: '', phone: '', modality: 'Online' });
+    setNewPatient({ name: '', email: '', phone: '', modality: 'Online', recurringDay: '', recurringTime: '' });
   };
 
   const openEditModal = (patient: any) => {
@@ -110,7 +129,9 @@ export default function App() {
       name: patient.name, 
       email: patient.email, 
       phone: patient.phone, 
-      modality: patient.modality 
+      modality: patient.modality,
+      recurringDay: patient.recurringDay || '',
+      recurringTime: patient.recurringTime || ''
     });
     setIsPatientModalOpen(true);
   };
@@ -151,6 +172,7 @@ export default function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'calendar', label: 'Agenda', icon: Calendar },
     { id: 'patients', label: 'Pacientes', icon: Users },
     { id: 'finance', label: 'Financeiro', icon: Wallet },
     { id: 'ai', label: 'Copiloto IA', icon: BrainCircuit },
@@ -248,12 +270,12 @@ export default function App() {
                       </div>
                       <div className="space-y-4">
                         <div 
-                          onClick={() => setActiveTab('patients')}
+                          onClick={() => setActiveTab('calendar')}
                           className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center justify-between group cursor-pointer hover:bg-rose-100 transition-colors"
                         >
                           <div>
                             <p className="font-bold text-slate-900">Ana Silva</p>
-                            <p className="text-xs text-rose-600 font-bold">Prontuário Pendente</p>
+                            <p className="text-xs text-rose-600 font-bold">Próxima Sessão: 09:00</p>
                           </div>
                           <ChevronRight size={18} className="text-rose-300 group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -390,6 +412,13 @@ export default function App() {
               </div>
             )}
 
+            {activeTab === 'calendar' && (
+              <CalendarView 
+                patients={patients} 
+                appointments={appointments} 
+                setAppointments={setAppointments} 
+              />
+            )}
             {activeTab === 'ai' && (
               <AICopilot 
                 patient={selectedPatientForRecord} 
@@ -479,6 +508,31 @@ export default function App() {
                   <option value="Online">Online</option>
                   <option value="Presencial">Presencial</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">Dia Recorrente</label>
+                <select 
+                  value={newPatient.recurringDay}
+                  onChange={e => setNewPatient({...newPatient, recurringDay: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Nenhum</option>
+                  <option value="Segunda">Segunda-feira</option>
+                  <option value="Terça">Terça-feira</option>
+                  <option value="Quarta">Quarta-feira</option>
+                  <option value="Quinta">Quinta-feira</option>
+                  <option value="Sexta">Sexta-feira</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700">Horário Fixo</label>
+                <input 
+                  type="time"
+                  value={newPatient.recurringTime}
+                  onChange={e => setNewPatient({...newPatient, recurringTime: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
             </div>
             <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">

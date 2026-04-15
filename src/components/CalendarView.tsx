@@ -149,12 +149,18 @@ export default function CalendarView({ patients, appointments, setAppointments }
           <p className="text-slate-500 text-xs lg:text-sm font-medium mt-1">Gerencie seus horários e sessões</p>
         </div>
         <div className="flex items-center justify-between md:justify-end gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
-          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
-            <ChevronLeft size={18} />
+          <button 
+            className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft size={18} aria-hidden="true" />
           </button>
-          <span className="px-4 font-bold text-slate-700 text-sm lg:text-base">Abril 2026</span>
-          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
-            <ChevronRight size={18} />
+          <span className="px-4 font-bold text-slate-700 text-sm lg:text-base" aria-live="polite">Abril 2026</span>
+          <button 
+            className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
+            aria-label="Próximo mês"
+          >
+            <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -165,7 +171,7 @@ export default function CalendarView({ patients, appointments, setAppointments }
           <div className="bento-card p-6 bg-white">
             <div className="grid grid-cols-7 gap-2 mb-4">
               {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
-                <div key={`${d}-${i}`} className="text-center text-[10px] font-black text-slate-300 uppercase">{d}</div>
+                <div key={`${d}-${i}`} className="text-center text-[0.625rem] font-black text-slate-300 uppercase">{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-2">
@@ -185,10 +191,12 @@ export default function CalendarView({ patients, appointments, setAppointments }
                         ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
                         : "hover:bg-slate-50 text-slate-600"
                     )}
+                    aria-label={`Selecionar dia ${day} de Abril`}
+                    aria-pressed={isSelected}
                   >
                     {day}
                     {hasAppointments && !isSelected && (
-                      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-400 rounded-full" />
+                      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-400 rounded-full" aria-hidden="true" />
                     )}
                   </button>
                 );
@@ -217,10 +225,10 @@ export default function CalendarView({ patients, appointments, setAppointments }
             <div className="p-4 lg:p-6 border-b border-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h3 className="font-bold text-slate-900">Cronograma</h3>
               <div className="flex gap-4">
-                <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span className="flex items-center gap-1.5 text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-sky-400" /> Online
                 </span>
-                <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span className="flex items-center gap-1.5 text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-amber-400" /> Presencial
                 </span>
               </div>
@@ -235,7 +243,7 @@ export default function CalendarView({ patients, appointments, setAppointments }
                   
                   return (
                     <div key={hour} className="flex border-b border-slate-50 group last:border-0">
-                      <div className="w-16 lg:w-20 py-6 lg:py-8 px-2 lg:px-4 text-[10px] lg:text-xs font-black text-slate-300 text-right border-r border-slate-50 bg-slate-50/30">
+                      <div className="w-16 lg:w-20 py-6 lg:py-8 px-2 lg:px-4 text-[0.625rem] lg:text-xs font-black text-slate-300 text-right border-r border-slate-50 bg-slate-50/30">
                         {hour}
                       </div>
                       <div className="flex-1 p-2 relative min-h-[80px] lg:min-h-[100px] space-y-2">
@@ -257,10 +265,10 @@ export default function CalendarView({ patients, appointments, setAppointments }
                                 <div className="min-w-0">
                                   <p className="font-black text-xs lg:text-sm uppercase tracking-tight truncate">{appointment.patientName}</p>
                                   <div className="flex flex-wrap items-center gap-2 lg:gap-3 mt-1 opacity-70">
-                                    <span className="flex items-center gap-1 text-[9px] lg:text-[10px] font-bold">
+                                    <span className="flex items-center gap-1 text-[0.5625rem] lg:text-[0.625rem] font-bold">
                                       <Clock size={10} /> {appointment.time}
                                     </span>
-                                    <span className="flex items-center gap-1 text-[9px] lg:text-[10px] font-bold">
+                                    <span className="flex items-center gap-1 text-[0.5625rem] lg:text-[0.625rem] font-bold">
                                       {appointment.type === 'Online' ? <Video size={10} /> : <MapPin size={10} />}
                                       {appointment.type}
                                     </span>
@@ -276,8 +284,9 @@ export default function CalendarView({ patients, appointments, setAppointments }
                                       "p-1.5 lg:p-2 rounded-lg transition-all",
                                       appointment.status === 'completed' ? "bg-emerald-500 text-white" : "bg-white/50 text-slate-400 hover:text-emerald-600"
                                     )}
+                                    aria-label={appointment.status === 'completed' ? "Marcar como não concluído" : "Marcar como concluído"}
                                   >
-                                    <CheckCircle2 size={14} />
+                                    <CheckCircle2 size={14} aria-hidden="true" />
                                   </button>
                                 </div>
                               </div>
@@ -287,7 +296,7 @@ export default function CalendarView({ patients, appointments, setAppointments }
                           <div className="h-full w-full rounded-xl lg:rounded-2xl border-2 border-dashed border-slate-50 group-hover:border-slate-100 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 min-h-[60px] lg:min-h-[80px]">
                             <button 
                               onClick={() => handleOpenBooking(hour)}
-                              className="text-[10px] lg:text-xs font-bold text-slate-300 hover:text-indigo-400 flex items-center gap-1"
+                              className="text-[0.625rem] lg:text-xs font-bold text-slate-300 hover:text-indigo-400 flex items-center gap-1"
                             >
                               <Plus size={12} /> Reservar
                             </button>

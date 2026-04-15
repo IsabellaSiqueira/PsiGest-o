@@ -1,5 +1,5 @@
 {
   "name": "PsicoGestão AI",
-  "description": "SaaS para psicólogos clínicos com gestão de pacientes, financeira e IA baseada em TCC.",
+  "description": "Plataforma de gestão clínica para psicólogos com conformidade CFP/LGPD, prontuário imutável, MFA e TCLE digital.",
   "requestFramePermissions": []
 }

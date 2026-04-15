@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { 
   Users, 
   LayoutDashboard, 
@@ -11,9 +11,15 @@ import {
   Clock,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Activity,
+  Type,
+  Plus,
+  Minus,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from './lib/utils';
+import { Toaster, toast } from 'sonner';
 import AICopilot from './components/AICopilot';
 import PatientList from './components/PatientList';
 import FinanceManager from './components/FinanceManager';
@@ -34,6 +40,7 @@ const initialPatients = [
     modality: 'Online', 
     risk: 'low', 
     notes: '',
+    tcleSigned: true,
     history: [
       { id: 'h1', date: '01 Abr 2024', content: 'Paciente relatou melhora no sono após técnicas de relaxamento.' },
       { id: 'h2', date: '08 Abr 2024', content: 'Focamos em reestruturação cognitiva sobre pensamentos de insuficiência.' }
@@ -52,6 +59,7 @@ const initialPatients = [
     modality: 'Presencial', 
     risk: 'high', 
     notes: '',
+    tcleSigned: false,
     history: [
       { id: 'h3', date: '07 Abr 2024', content: 'Sessão focada em ativação comportamental. Baixa energia relatada.' }
     ],
@@ -91,12 +99,51 @@ export default function App() {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [editingPatient, setEditingPatient] = useState<any>(null);
   const [selectedPatientForRecord, setSelectedPatientForRecord] = useState<any>(null);
+  const [fontSize, setFontSize] = useState(16);
+
+  // Accessibility Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey) {
+        switch (e.key) {
+          case '1': setActiveTab('dashboard'); break;
+          case '2': setActiveTab('calendar'); break;
+          case '3': setActiveTab('patients'); break;
+          case '4': setActiveTab('finance'); break;
+          case '5': setActiveTab('ai'); break;
+          case '+': setFontSize(prev => Math.min(prev + 2, 24)); break;
+          case '-': setFontSize(prev => Math.max(prev - 2, 12)); break;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Apply accessibility settings to root element
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSize}px`;
+  }, [fontSize]);
 
   // Form states
   const [newPatient, setNewPatient] = useState({ name: '', email: '', phone: '', modality: 'Online', recurringDay: '', recurringTime: '' });
   const [newTx, setNewTx] = useState({ patient: '', amount: '', category: 'Sessão Individual' });
+
+  const logAction = (action: string, details: string) => {
+    const newLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+      ip: '192.168.1.1' // Simulated
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+    console.log(`[AUDIT LOG] ${action}: ${details}`);
+  };
 
   const handleAddPatient = (e: FormEvent) => {
     e.preventDefault();
@@ -109,8 +156,10 @@ export default function App() {
       tags: ['Novo'], 
       risk: 'low',
       notes: '',
+      tcleSigned: false,
       history: []
     }, ...patients]);
+    logAction('CREATE_PATIENT', `Paciente ${newPatient.name} adicionado.`);
     setIsPatientModalOpen(false);
     setNewPatient({ name: '', email: '', phone: '', modality: 'Online', recurringDay: '', recurringTime: '' });
   };
@@ -136,10 +185,17 @@ export default function App() {
     setIsPatientModalOpen(true);
   };
 
-  const handleSavePatientNotes = (patientId: string, notes: string) => {
+  const handleSavePatientNotes = (patientId: string, notes: string, entryId?: string) => {
     const date = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
     setPatients(patients.map(p => {
       if (p.id === patientId) {
+        if (entryId) {
+          // Addendum mode
+          return {
+            ...p,
+            history: p.history.map(h => h.id === entryId ? { ...h, content: h.content + notes } : h)
+          };
+        }
         const newHistoryEntry = {
           id: Math.random().toString(36).substr(2, 9),
           date,
@@ -178,6 +234,28 @@ export default function App() {
     { id: 'ai', label: 'Copiloto IA', icon: BrainCircuit },
   ];
 
+  if (isMaintenanceMode) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-6">
+          <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl">
+            <Activity size={40} className="animate-pulse" />
+          </div>
+          <h1 className="text-3xl font-black text-slate-900">Manutenção Programada</h1>
+          <p className="text-slate-500 font-medium leading-relaxed">
+            Estamos realizando melhorias em nossa infraestrutura para garantir o SLA de 99.99%. Voltaremos em breve com mais segurança e velocidade.
+          </p>
+          <button 
+            onClick={() => setIsMaintenanceMode(false)}
+            className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
   }
@@ -185,7 +263,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#F3F4F6] font-sans text-slate-900 overflow-hidden p-0 lg:p-4">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-72 bg-white rounded-4xl border border-slate-200/50 flex-col shadow-[0_8px_30px_rgb(0,0,0,0.02)] m-2">
+      <aside className="hidden lg:flex w-72 bg-white rounded-4xl border border-slate-200/50 flex-col shadow-[0_8px_30px_rgb(0,0,0,0.02)] m-2 overflow-y-auto custom-scrollbar">
         <div className="p-8">
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
@@ -195,7 +273,7 @@ export default function App() {
           </h1>
         </div>
 
-        <nav className="flex-1 px-6 space-y-2">
+        <nav className="flex-1 px-6 space-y-2" role="navigation" aria-label="Menu Principal">
           {navItems.map((item) => (
             <NavItem 
               key={item.id}
@@ -203,18 +281,46 @@ export default function App() {
               label={item.label} 
               active={activeTab === item.id} 
               onClick={() => setActiveTab(item.id)} 
+              aria-label={`Ir para ${item.label}`}
             />
           ))}
           <button 
             onClick={() => setIsAuthenticated(false)}
             className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold text-rose-500 hover:bg-rose-50 transition-all duration-300 mt-4"
+            aria-label="Sair do sistema"
           >
-            <LogOut size={22} />
+            <LogOut size={22} aria-hidden="true" />
             Sair do Sistema
           </button>
         </nav>
 
-        <div className="p-6 mt-auto">
+        <div className="p-6 mt-auto space-y-4">
+          {/* Accessibility Controls */}
+          <div className="bg-slate-50 rounded-3xl p-4 space-y-3 border border-slate-100">
+            <p className="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest px-2">Acessibilidade</p>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setFontSize(prev => Math.max(prev - 2, 12))}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                title="Diminuir Fonte (Alt+-)"
+                aria-label="Diminuir tamanho da fonte"
+              >
+                <Minus size={14} />
+              </button>
+              <div className="w-8 h-8 flex items-center justify-center text-xs font-bold text-slate-600">
+                <Type size={14} />
+              </div>
+              <button 
+                onClick={() => setFontSize(prev => Math.min(prev + 2, 24))}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                title="Aumentar Fonte (Alt++)"
+                aria-label="Aumentar tamanho da fonte"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+
           <div className="bg-slate-50 rounded-3xl p-4 flex items-center gap-3 border border-slate-100">
             <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
               IT
@@ -239,7 +345,7 @@ export default function App() {
               <h2 className="text-lg lg:text-2xl font-bold text-slate-900 capitalize">
                 {activeTab === 'dashboard' ? 'Início' : activeTab}
               </h2>
-              <p className="text-[10px] lg:text-sm text-slate-500 font-medium lg:block hidden">Quarta-feira, 08 de Abril</p>
+              <p className="text-[0.625rem] lg:text-sm text-slate-500 font-medium lg:block hidden">Quarta-feira, 08 de Abril</p>
             </div>
           </div>
           
@@ -264,7 +370,7 @@ export default function App() {
                   {/* At a Glance - Priority 1 */}
                   <div className="lg:col-span-4 bento-card p-6 lg:p-8 bg-white border-l-4 border-l-rose-500 relative overflow-hidden">
                     <div className="relative z-10">
-                      <div className="flex items-center gap-3 text-rose-600 font-black text-[10px] lg:text-xs uppercase tracking-widest mb-4 lg:mb-6">
+                      <div className="flex items-center gap-3 text-rose-600 font-black text-[0.625rem] lg:text-xs uppercase tracking-widest mb-4 lg:mb-6">
                         <Clock size={16} />
                         Atenção Imediata
                       </div>
@@ -295,24 +401,55 @@ export default function App() {
 
                   {/* Main Stats - Asymmetric */}
                   <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bento-card p-6 lg:p-8 bg-indigo-600 text-white shadow-xl shadow-indigo-100">
-                      <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 lg:mb-6">
-                        <Users size={20} />
-                      </div>
-                      <p className="text-indigo-100 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Pacientes Ativos</p>
-                      <h3 className="text-2xl lg:text-4xl font-black mt-2">{patients.length}</h3>
-                      <div className="mt-4 flex items-center gap-2 text-[10px] lg:text-xs font-bold text-indigo-200">
-                        <TrendingUp size={14} />
-                        <span>+3 este mês</span>
+                    <div className="bento-card p-6 lg:p-8 bg-white border border-slate-100 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-700" />
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <Users size={24} />
+                          </div>
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[0.625rem] font-black uppercase tracking-widest">
+                            <TrendingUp size={12} />
+                            +12%
+                          </div>
+                        </div>
+                        <p className="text-slate-400 text-[0.625rem] lg:text-sm font-bold uppercase tracking-widest">Pacientes Ativos</p>
+                        <div className="flex items-baseline gap-3 mt-2">
+                          <h3 className="text-3xl lg:text-5xl font-black text-slate-900">{patients.length}</h3>
+                          <span className="text-sm font-bold text-slate-400">/ 50 vagas</span>
+                        </div>
+                        
+                        <div className="mt-8 space-y-4">
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span className="text-slate-500">Capacidade do Consultório</span>
+                            <span className="text-indigo-600">{Math.round((patients.length / 50) * 100)}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-indigo-600 rounded-full transition-all duration-1000" 
+                              style={{ width: `${(patients.length / 50) * 100}%` }} 
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                              <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest mb-1">Online</p>
+                              <p className="text-lg font-black text-slate-800">{patients.filter(p => p.modality === 'Online').length}</p>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                              <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest mb-1">Presencial</p>
+                              <p className="text-lg font-black text-slate-800">{patients.filter(p => p.modality === 'Presencial').length}</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="bento-card p-6 lg:p-8 bg-white">
                       <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 lg:mb-6">
                         <Calendar size={20} />
                       </div>
-                      <p className="text-slate-400 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Sessões Hoje</p>
+                      <p className="text-slate-400 text-[0.625rem] lg:text-sm font-bold uppercase tracking-widest">Sessões Hoje</p>
                       <h3 className="text-2xl lg:text-4xl font-black text-slate-900 mt-2">6</h3>
-                      <p className="text-[10px] lg:text-xs text-slate-400 mt-2 font-medium">Próxima: 14:00 - Mariana Costa</p>
+                      <p className="text-[0.625rem] lg:text-xs text-slate-400 mt-2 font-medium">Próxima: 14:00 - Mariana Costa</p>
                     </div>
                   </div>
 
@@ -376,7 +513,7 @@ export default function App() {
                           <TrendingUp size={20} />
                         </button>
                       </div>
-                      <p className="text-slate-400 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Faturamento Mês</p>
+                      <p className="text-slate-400 text-[0.625rem] lg:text-sm font-bold uppercase tracking-widest">Faturamento Mês</p>
                       <h3 className="text-2xl lg:text-4xl font-black text-slate-900 mt-2">
                         R$ {transactions.reduce((acc, tx) => acc + (tx.status === 'paid' ? tx.amount : 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </h3>
@@ -422,9 +559,9 @@ export default function App() {
             {activeTab === 'ai' && (
               <AICopilot 
                 patient={selectedPatientForRecord} 
-                onSaveNotes={(notes) => {
+                onSaveNotes={(notes, entryId) => {
                   if (selectedPatientForRecord) {
-                    handleSavePatientNotes(selectedPatientForRecord.id, notes);
+                    handleSavePatientNotes(selectedPatientForRecord.id, notes, entryId);
                   }
                 }}
               />
@@ -466,36 +603,84 @@ export default function App() {
           <form onSubmit={editingPatient ? handleEditPatient : handleAddPatient} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Nome Completo</label>
+                <label className="text-sm font-bold text-slate-700" htmlFor="patient-name">Nome Completo</label>
                 <input 
+                  id="patient-name"
                   required
                   type="text" 
                   value={newPatient.name}
                   onChange={e => setNewPatient({...newPatient, name: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="Ex: João Silva"
+                  aria-required="true"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">E-mail</label>
+                <label className="text-sm font-bold text-slate-700" htmlFor="patient-email">E-mail</label>
                 <input 
+                  id="patient-email"
                   required
                   type="email" 
                   value={newPatient.email}
                   onChange={e => setNewPatient({...newPatient, email: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="joao@email.com"
+                  aria-required="true"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Telefone (WhatsApp)</label>
+                <label className="text-sm font-bold text-slate-700" htmlFor="patient-phone">Telefone (WhatsApp)</label>
                 <input 
+                  id="patient-phone"
                   required
                   type="text" 
                   value={newPatient.phone}
                   onChange={e => setNewPatient({...newPatient, phone: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="5511999999999"
+                  aria-required="true"
+                  aria-describedby="phone-hint"
+                />
+                <p id="phone-hint" className="text-[0.625rem] text-slate-500 font-medium flex items-center gap-1">
+                  <AlertCircle size={10} /> O número deve conter o DDD e 9 dígitos (total 11).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700" htmlFor="patient-cpf">CPF</label>
+                <input 
+                  id="patient-cpf"
+                  required
+                  type="text" 
+                  value={newPatient.cpf || ''}
+                  onChange={e => {
+                    let v = e.target.value.replace(/\D/g, '');
+                    if (v.length <= 11) {
+                      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                      setNewPatient({...newPatient, cpf: v});
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
+                  placeholder="000.000.000-00"
+                  aria-required="true"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700" htmlFor="patient-cep">CEP</label>
+                <input 
+                  id="patient-cep"
+                  required
+                  type="text" 
+                  value={newPatient.cep || ''}
+                  onChange={e => {
+                    let v = e.target.value.replace(/\D/g, '');
+                    if (v.length <= 8) {
+                      v = v.replace(/(\d{5})(\d{3})/, "$1-$2");
+                      setNewPatient({...newPatient, cep: v});
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500"
+                  placeholder="00000-000"
+                  aria-required="true"
                 />
               </div>
               <div className="space-y-2">
@@ -610,7 +795,7 @@ export default function App() {
               )}>
                 <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
               </div>
-              <span className="text-[9px] font-bold uppercase tracking-tighter">{item.label}</span>
+              <span className="text-[0.5625rem] font-bold uppercase tracking-tighter">{item.label}</span>
             </button>
           ))}
           <button
@@ -620,10 +805,11 @@ export default function App() {
             <div className="p-2 rounded-xl">
               <LogOut size={20} />
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-tighter">Sair</span>
+            <span className="text-[0.5625rem] font-bold uppercase tracking-tighter">Sair</span>
           </button>
         </nav>
       </main>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

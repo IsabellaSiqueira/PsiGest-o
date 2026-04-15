@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { BrainCircuit, Send, Sparkles, History, CheckCircle2, Copy, FileText, Info, User, Calendar } from 'lucide-react';
+import { BrainCircuit, Send, Sparkles, History, CheckCircle2, Copy, FileText, Info, User, Calendar, PlusCircle, ShieldAlert, Volume2 } from 'lucide-react';
 import { formatTCCEvolution } from '../services/geminiService';
 import { cn } from '../lib/utils';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 
 const toneOptions = [
   { id: 'detailed', label: 'Mais Detalhado' },
@@ -15,7 +16,7 @@ const toneOptions = [
 
 interface AICopilotProps {
   patient?: any;
-  onSaveNotes?: (notes: string) => void;
+  onSaveNotes?: (notes: string, entryId?: string) => void;
 }
 
 export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
@@ -24,6 +25,8 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
   const [result, setResult] = useState<any>(null);
   const [selectedTone, setSelectedTone] = useState('detailed');
   const [editorValue, setEditorValue] = useState('');
+  const [isAddendumMode, setIsAddendumMode] = useState(false);
+  const [selectedEntryForAddendum, setSelectedEntryForAddendum] = useState<any>(null);
 
   // Update rawNotes when patient changes
   useEffect(() => {
@@ -43,8 +46,9 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
       const formatted = await formatTCCEvolution(rawNotes);
       setResult(formatted);
       setEditorValue(formatted.evolucaoTexto);
+      toast.success('Evolução estruturada gerada com sucesso!');
     } catch (error) {
-      alert("Erro ao processar com IA. Verifique sua chave de API.");
+      toast.error('Erro ao processar com IA');
     } finally {
       setIsGenerating(false);
     }
@@ -72,7 +76,7 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
       elements.push(
         <span key={match.index} className="relative group cursor-help border-b border-dotted border-indigo-400 text-indigo-700 font-bold">
           {match[0]}
-          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white text-[10px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl leading-relaxed">
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white text-[0.625rem] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl leading-relaxed">
             <Info size={12} className="inline mr-1 mb-0.5" />
             {xaiTerms[term]}
           </span>
@@ -84,32 +88,62 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
     return elements;
   };
 
+  const handleSpeak = (text: string) => {
+    if (!text) return;
+    
+    // Stop any current speech
+    window.speechSynthesis.cancel();
+    
+    // Clean HTML tags if present
+    const cleanText = text.replace(/<[^>]*>/g, '');
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 1;
+    
+    window.speechSynthesis.speak(utterance);
+    toast.info('Lendo em voz alta...');
+  };
+
   const handleCopy = () => {
     const textToCopy = editorValue.replace(/<[^>]*>/g, '');
     navigator.clipboard.writeText(textToCopy);
-    alert('Copiado para a área de transferência!');
+    toast.success('Copiado para a área de transferência');
   };
 
   const handleSave = () => {
     if (!patient) {
-      alert('Selecione um paciente na lista para salvar as anotações no prontuário.');
+      toast.error('Selecione um paciente');
       return;
     }
     
-    // Save either the formatted evolution or the raw notes
     const contentToSave = editorValue || rawNotes;
     
     if (!contentToSave.trim()) {
-      alert('Não há conteúdo para salvar.');
+      toast.error('Não há conteúdo para salvar');
       return;
     }
 
     if (onSaveNotes) {
-      onSaveNotes(contentToSave);
-      alert(`Evolução de ${patient.name} salva com sucesso no histórico!`);
+      if (isAddendumMode && selectedEntryForAddendum) {
+        // Handle addendum
+        const addendumContent = `
+          <div class="mt-4 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl">
+            <p class="text-[0.625rem] font-black text-amber-700 uppercase tracking-widest mb-1">Adendo - ${new Date().toLocaleDateString('pt-BR')}</p>
+            ${contentToSave}
+          </div>
+        `;
+        onSaveNotes(addendumContent, selectedEntryForAddendum.id);
+        toast.success('Adendo registrado com sucesso!');
+      } else {
+        onSaveNotes(contentToSave);
+        toast.success(`Evolução de ${patient.name} salva com sucesso!`);
+      }
       setRawNotes('');
       setResult(null);
       setEditorValue('');
+      setIsAddendumMode(false);
+      setSelectedEntryForAddendum(null);
     }
   };
 
@@ -239,6 +273,14 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <button 
+                    onClick={() => handleSpeak(editorValue || result.evolucaoTexto)}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-emerald-100 rounded-xl text-emerald-600 transition-colors" 
+                    title="Ouvir (Acessibilidade)"
+                    aria-label="Ouvir evolução em voz alta"
+                  >
+                    <Volume2 size={20} />
+                  </button>
+                  <button 
                     onClick={handleCopy}
                     className="w-10 h-10 flex items-center justify-center hover:bg-emerald-100 rounded-xl text-emerald-600 transition-colors" 
                     title="Copiar"
@@ -257,15 +299,21 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
               
               <div className="p-8 lg:p-10 space-y-8 max-h-[600px] overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-1 gap-6">
-                  <Section title="Humor e Estado Mental" content={renderXAIContent(result.humor)} />
-                  <Section title="Pauta da Sessão" content={renderXAIContent(result.pauta)} />
-                  <Section title="Intervenções Realizadas" content={renderXAIContent(result.intervencoes)} />
+                  <Section title="1. Identificação" content={renderXAIContent(result.identificacao)} />
+                  <Section title="2. Avaliação de Demanda e Objetivos" content={renderXAIContent(result.demandaObjetivos)} />
+                  <Section title="3. Evolução do Trabalho" content={renderXAIContent(result.evolucaoTrabalho)} />
+                  <Section title="4. Registro de Encaminhamento ou Encerramento" content={renderXAIContent(result.encaminhamentoEncerramento)} />
+                  {result.documentosAvaliacao && (
+                    <Section title="5. Documentos Resultantes de Avaliação" content={renderXAIContent(result.documentosAvaliacao)} />
+                  )}
                 </div>
                 
                 <div className="pt-8 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Editor de Evolução (Human-in-the-loop)</h4>
-                    <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-black uppercase">Revisão Obrigatória</span>
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      {isAddendumMode ? 'Editor de Adendo' : 'Editor de Evolução (Human-in-the-loop)'}
+                    </h4>
+                    <span className="text-[0.625rem] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-black uppercase">Revisão Obrigatória</span>
                   </div>
                   <div className="rich-text-editor">
                     <ReactQuill 
@@ -294,21 +342,51 @@ export default function AICopilot({ patient, onSaveNotes }: AICopilotProps) {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {patient.history.map((entry: any) => (
-              <div key={entry.id} className="bento-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
+              <div key={entry.id} className="bento-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group relative">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-lg">
                     <Calendar size={14} />
                     {entry.date}
                   </div>
-                  <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(entry.content.replace(/<[^>]*>/g, ''));
-                      alert('Copiado!');
-                    }}
-                    className="text-slate-300 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Copy size={16} />
-                  </button>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleSpeak(entry.content)}
+                      className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
+                      title="Ouvir Registro"
+                      aria-label="Ouvir registro em voz alta"
+                    >
+                      <Volume2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsAddendumMode(true);
+                        setSelectedEntryForAddendum(entry);
+                        setRawNotes('');
+                        setResult(null);
+                        setEditorValue('');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        toast.info('Modo Adendo Ativado', {
+                          description: `Escreva o adendo para a sessão de ${entry.date}.`
+                        });
+                      }}
+                      className="p-2 hover:bg-amber-50 text-amber-600 rounded-lg transition-colors"
+                      title="Adicionar Adendo"
+                    >
+                      <PlusCircle size={16} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(entry.content.replace(/<[^>]*>/g, ''));
+                        toast.success('Copiado!');
+                      }}
+                      className="p-2 hover:bg-slate-50 text-slate-400 rounded-lg transition-colors"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <ShieldAlert size={14} className="text-slate-200" title="Registro Imutável" />
                 </div>
                 <div 
                   className="text-sm text-slate-600 leading-relaxed line-clamp-6 prose prose-sm max-w-none"

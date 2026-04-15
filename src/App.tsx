@@ -230,16 +230,16 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative lg:ml-2">
         {/* Header */}
-        <header className="h-20 flex items-center justify-between px-6 lg:px-10 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="lg:hidden w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+        <header className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-10 shrink-0 bg-white/50 backdrop-blur-md lg:bg-transparent border-b border-slate-100 lg:border-none">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="lg:hidden w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
               <BrainCircuit size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 capitalize lg:block hidden">
-                {activeTab === 'dashboard' ? 'Bem-vinda de volta!' : activeTab}
+              <h2 className="text-lg lg:text-2xl font-bold text-slate-900 capitalize">
+                {activeTab === 'dashboard' ? 'Início' : activeTab}
               </h2>
-              <p className="text-sm text-slate-500 font-medium hidden lg:block">Quarta-feira, 08 de Abril</p>
+              <p className="text-[10px] lg:text-sm text-slate-500 font-medium lg:block hidden">Quarta-feira, 08 de Abril</p>
             </div>
           </div>
           
@@ -256,19 +256,19 @@ export default function App() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10 pb-24 lg:pb-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-28 lg:pb-10 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             {activeTab === 'dashboard' && (
-              <div className="space-y-8 animate-in fade-in duration-700">
+              <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-700">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   {/* At a Glance - Priority 1 */}
-                  <div className="lg:col-span-4 bento-card p-8 bg-white border-l-4 border-l-rose-500 relative overflow-hidden">
+                  <div className="lg:col-span-4 bento-card p-6 lg:p-8 bg-white border-l-4 border-l-rose-500 relative overflow-hidden">
                     <div className="relative z-10">
-                      <div className="flex items-center gap-3 text-rose-600 font-black text-xs uppercase tracking-widest mb-6">
-                        <Clock size={18} />
+                      <div className="flex items-center gap-3 text-rose-600 font-black text-[10px] lg:text-xs uppercase tracking-widest mb-4 lg:mb-6">
+                        <Clock size={16} />
                         Atenção Imediata
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3 lg:space-y-4">
                         <div 
                           onClick={() => setActiveTab('calendar')}
                           className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center justify-between group cursor-pointer hover:bg-rose-100 transition-colors"
@@ -294,25 +294,25 @@ export default function App() {
                   </div>
 
                   {/* Main Stats - Asymmetric */}
-                  <div className="lg:col-span-8 grid grid-cols-2 gap-6">
-                    <div className="bento-card p-8 bg-indigo-600 text-white shadow-xl shadow-indigo-100">
-                      <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6">
-                        <Users size={24} />
+                  <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="bento-card p-6 lg:p-8 bg-indigo-600 text-white shadow-xl shadow-indigo-100">
+                      <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 lg:mb-6">
+                        <Users size={20} />
                       </div>
-                      <p className="text-indigo-100 text-sm font-bold uppercase tracking-widest">Pacientes Ativos</p>
-                      <h3 className="text-4xl font-black mt-2">{patients.length}</h3>
-                      <div className="mt-4 flex items-center gap-2 text-xs font-bold text-indigo-200">
+                      <p className="text-indigo-100 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Pacientes Ativos</p>
+                      <h3 className="text-2xl lg:text-4xl font-black mt-2">{patients.length}</h3>
+                      <div className="mt-4 flex items-center gap-2 text-[10px] lg:text-xs font-bold text-indigo-200">
                         <TrendingUp size={14} />
                         <span>+3 este mês</span>
                       </div>
                     </div>
-                    <div className="bento-card p-8 bg-white">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6">
-                        <Calendar size={24} />
+                    <div className="bento-card p-6 lg:p-8 bg-white">
+                      <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 lg:mb-6">
+                        <Calendar size={20} />
                       </div>
-                      <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Sessões Hoje</p>
-                      <h3 className="text-4xl font-black text-slate-900 mt-2">6</h3>
-                      <p className="text-xs text-slate-400 mt-2 font-medium">Próxima: 14:00 - Mariana Costa</p>
+                      <p className="text-slate-400 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Sessões Hoje</p>
+                      <h3 className="text-2xl lg:text-4xl font-black text-slate-900 mt-2">6</h3>
+                      <p className="text-[10px] lg:text-xs text-slate-400 mt-2 font-medium">Próxima: 14:00 - Mariana Costa</p>
                     </div>
                   </div>
 
@@ -366,18 +366,18 @@ export default function App() {
                   </div>
 
                   {/* Financial Quick View */}
-                  <div className="lg:col-span-5 bento-card p-8 flex flex-col justify-between">
+                  <div className="lg:col-span-5 bento-card p-6 lg:p-8 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                          <Wallet size={24} />
+                      <div className="flex items-center justify-between mb-6 lg:mb-8">
+                        <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                          <Wallet size={20} />
                         </div>
                         <button className="text-slate-400 hover:text-indigo-600 transition-colors">
                           <TrendingUp size={20} />
                         </button>
                       </div>
-                      <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Faturamento Mês</p>
-                      <h3 className="text-4xl font-black text-slate-900 mt-2">
+                      <p className="text-slate-400 text-[10px] lg:text-sm font-bold uppercase tracking-widest">Faturamento Mês</p>
+                      <h3 className="text-2xl lg:text-4xl font-black text-slate-900 mt-2">
                         R$ {transactions.reduce((acc, tx) => acc + (tx.status === 'paid' ? tx.amount : 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </h3>
                       <div className="mt-6 space-y-3">
@@ -594,26 +594,33 @@ export default function App() {
         </Modal>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-xl border border-slate-200/50 px-8 py-4 flex justify-between items-center z-50 rounded-3xl shadow-2xl">
+        <nav className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-xl border border-slate-200/50 px-4 py-3 flex justify-between items-center z-50 rounded-3xl shadow-2xl">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300",
-                activeTab === item.id ? "text-indigo-600 scale-110" : "text-slate-400 hover:text-slate-600"
+                "flex flex-col items-center gap-1 transition-all duration-300",
+                activeTab === item.id ? "text-indigo-600" : "text-slate-400"
               )}
             >
-              <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+              <div className={cn(
+                "p-2 rounded-xl transition-all",
+                activeTab === item.id ? "bg-indigo-50" : "bg-transparent"
+              )}>
+                <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-tighter">{item.label}</span>
             </button>
           ))}
           <button
             onClick={() => setIsAuthenticated(false)}
-            className="flex flex-col items-center gap-1.5 text-rose-400 hover:text-rose-600 transition-all duration-300"
+            className="flex flex-col items-center gap-1 text-rose-400"
           >
-            <LogOut size={22} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Sair</span>
+            <div className="p-2 rounded-xl">
+              <LogOut size={20} />
+            </div>
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Sair</span>
           </button>
         </nav>
       </main>

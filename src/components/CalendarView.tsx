@@ -145,16 +145,16 @@ export default function CalendarView({ patients, appointments, setAppointments }
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-900">Agenda</h2>
-          <p className="text-slate-500 font-medium mt-1">Gerencie seus horários e sessões</p>
+          <h2 className="text-2xl lg:text-3xl font-black text-slate-900">Agenda</h2>
+          <p className="text-slate-500 text-xs lg:text-sm font-medium mt-1">Gerencie seus horários e sessões</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between md:justify-end gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
           <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} />
           </button>
-          <span className="px-4 font-bold text-slate-700">Abril 2026</span>
+          <span className="px-4 font-bold text-slate-700 text-sm lg:text-base">Abril 2026</span>
           <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
-            <ChevronRight size={20} />
+            <ChevronRight size={18} />
           </button>
         </div>
       </div>
@@ -214,9 +214,9 @@ export default function CalendarView({ patients, appointments, setAppointments }
         {/* Timeline View */}
         <div className="lg:col-span-8 space-y-4">
           <div className="bento-card bg-white overflow-hidden">
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+            <div className="p-4 lg:p-6 border-b border-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h3 className="font-bold text-slate-900">Cronograma</h3>
-              <div className="flex gap-2">
+              <div className="flex gap-4">
                 <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-sky-400" /> Online
                 </span>
@@ -226,7 +226,7 @@ export default function CalendarView({ patients, appointments, setAppointments }
               </div>
             </div>
             
-            <div className="p-0 max-h-[600px] overflow-y-auto custom-scrollbar">
+            <div className="p-0 max-h-[500px] lg:max-h-[600px] overflow-y-auto custom-scrollbar">
               <div className="relative">
                 {hours.map((hour) => {
                   const hourPrefix = hour.split(':')[0];
@@ -235,10 +235,10 @@ export default function CalendarView({ patients, appointments, setAppointments }
                   
                   return (
                     <div key={hour} className="flex border-b border-slate-50 group last:border-0">
-                      <div className="w-20 py-8 px-4 text-xs font-black text-slate-300 text-right border-r border-slate-50 bg-slate-50/30">
+                      <div className="w-16 lg:w-20 py-6 lg:py-8 px-2 lg:px-4 text-[10px] lg:text-xs font-black text-slate-300 text-right border-r border-slate-50 bg-slate-50/30">
                         {hour}
                       </div>
-                      <div className="flex-1 p-2 relative min-h-[100px] space-y-2">
+                      <div className="flex-1 p-2 relative min-h-[80px] lg:min-h-[100px] space-y-2">
                         {hourAppointments.length > 0 ? (
                           hourAppointments.map(appointment => (
                             <motion.div 
@@ -247,55 +247,49 @@ export default function CalendarView({ patients, appointments, setAppointments }
                               animate={{ opacity: 1, x: 0 }}
                               onClick={() => handleOpenEdit(appointment)}
                               className={cn(
-                                "p-4 rounded-2xl border-l-4 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer",
+                                "p-3 lg:p-4 rounded-xl lg:rounded-2xl border-l-4 shadow-sm flex flex-col justify-between transition-all hover:shadow-md cursor-pointer",
                                 appointment.type === 'Online' 
                                   ? "bg-sky-50 border-sky-500 text-sky-900" 
                                   : "bg-amber-50 border-amber-500 text-amber-900"
                               )}
                             >
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="font-black text-sm uppercase tracking-tight">{appointment.patientName}</p>
-                                  <div className="flex items-center gap-3 mt-1 opacity-70">
-                                    <span className="flex items-center gap-1 text-[10px] font-bold">
-                                      <Clock size={12} /> {appointment.time} ({appointment.duration})
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="font-black text-xs lg:text-sm uppercase tracking-tight truncate">{appointment.patientName}</p>
+                                  <div className="flex flex-wrap items-center gap-2 lg:gap-3 mt-1 opacity-70">
+                                    <span className="flex items-center gap-1 text-[9px] lg:text-[10px] font-bold">
+                                      <Clock size={10} /> {appointment.time}
                                     </span>
-                                    <span className="flex items-center gap-1 text-[10px] font-bold">
-                                      {appointment.type === 'Online' ? <Video size={12} /> : <MapPin size={12} />}
+                                    <span className="flex items-center gap-1 text-[9px] lg:text-[10px] font-bold">
+                                      {appointment.type === 'Online' ? <Video size={10} /> : <MapPin size={10} />}
                                       {appointment.type}
                                     </span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 lg:gap-2 shrink-0">
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleUpdateStatus(appointment.id, appointment.status === 'completed' ? 'confirmed' : 'completed');
                                     }}
                                     className={cn(
-                                      "p-2 rounded-xl transition-all",
+                                      "p-1.5 lg:p-2 rounded-lg transition-all",
                                       appointment.status === 'completed' ? "bg-emerald-500 text-white" : "bg-white/50 text-slate-400 hover:text-emerald-600"
                                     )}
                                   >
-                                    <CheckCircle2 size={16} />
+                                    <CheckCircle2 size={14} />
                                   </button>
-                                  <span className={cn(
-                                    "text-[10px] font-black uppercase px-2 py-1 rounded-lg",
-                                    appointment.status === 'completed' ? "bg-emerald-500/10 text-emerald-600" : "bg-white/50"
-                                  )}>
-                                    {appointment.status === 'completed' ? 'Finalizada' : appointment.status === 'pending' ? 'Pendente' : 'Confirmada'}
-                                  </span>
                                 </div>
                               </div>
                             </motion.div>
                           ))
                         ) : (
-                          <div className="h-full w-full rounded-2xl border-2 border-dashed border-slate-50 group-hover:border-slate-100 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 min-h-[80px]">
+                          <div className="h-full w-full rounded-xl lg:rounded-2xl border-2 border-dashed border-slate-50 group-hover:border-slate-100 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 min-h-[60px] lg:min-h-[80px]">
                             <button 
                               onClick={() => handleOpenBooking(hour)}
-                              className="text-xs font-bold text-slate-300 hover:text-indigo-400 flex items-center gap-1"
+                              className="text-[10px] lg:text-xs font-bold text-slate-300 hover:text-indigo-400 flex items-center gap-1"
                             >
-                              <Plus size={14} /> Reservar horário
+                              <Plus size={12} /> Reservar
                             </button>
                           </div>
                         )}
